@@ -3,7 +3,7 @@ from numpy.random import randn
 import math
 
 
-speed = 10.
+speed = 0.5
 
 def predict(m1, v1, m2, v2):
     return (m1 + m2, v1 + v2)
@@ -25,10 +25,10 @@ class dog:
 
     def move(self, epoch):
         self.position = self.position + (epoch * speed)
-        self.position += randn() * self.process_var# Add Process Noise
+        self.position += randn() * self.process_var/2# Add Process Noise
 
     def getSensor(self):
-        return self.position + randn() * self.sensor_var / 2.
+        return self.position + randn() * self.sensor_var/2
 
 class KF:
     mean = 0.
@@ -65,16 +65,43 @@ def plotPoints(y):
 
 
 
-Simon = dog(4., 4., 0.)
-Filter = KF(4., 4., 10.)
+Simon = dog(1., 10.0, 0.)
+Filter = KF(1., 10.0, 400.)
 
 points = []
-for i in range(10):
-    print(Filter.mean, Filter.var)
-    plotDis(Filter.mean, Filter.var)
+
+a, b, c = [], [], []
+low, upp = [], []
+
+for i in range(25):
+    #plotDis(Filter.mean, Filter.var)
     Simon.move(1.)
+    
     Filter.posPredict(1.)
-    Filter.posUpdate(Simon.getSensor())
+
+    print("Filter Mean: " + str(Filter.mean) + " Filter Var: " + str(Filter.var))
+    z = Simon.getSensor()
+    a.append(z)
+    b.append(Filter.mean)
+
+    Filter.posUpdate(z)
+
+    print("Filter Mean: " + str(Filter.mean) + " Filter Var: " + str(Filter.var))
+    print("Simon Mean : " + str(z))
+    print("")
+    c.append(Filter.mean)
+    low.append(Filter.mean - Filter.var)
+    upp.append(Filter.mean + Filter.var)
+
+
+plt.plot(range(len(a)),a, '*')
+plt.plot(range(len(b)),b, 'o')
+plt.plot(c)
+plt.fill_between(range(len(c)), low, upp,facecolor='yellow', alpha=0.5)
+#plt.ylim(-20,30)
+plt.show()
+
+
 
 #plotPoints(points)
 
